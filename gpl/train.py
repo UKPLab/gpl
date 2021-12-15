@@ -21,7 +21,7 @@ def train(
     evaluation_data: str,
     output_dir: str,
     do_evaluation: str = False,
-    evaluation_output: str = None,
+    evaluation_output: str = 'output',
     qgen_prefix: str = 'qgen',
     base_ckpt: str = 'distilbert-base-uncased',
     generator: str = 'BeIR/query-gen-msmarco-t5-base-v1',
@@ -40,6 +40,7 @@ def train(
     assert pooling in ['mean', 'cls', 'max']
     if do_evaluation:
         assert evaluation_data is not None
+        assert evaluation_output is not None
         try:
             GenericDataLoader(evaluation_data)
         except Exception as e:
@@ -138,7 +139,7 @@ if __name__ == '__main__':
     parser.add_argument('--evaluation_data', required=True, help='Path to the BeIR-format dataset. Please make sure at least `corpus.jsonl` exists under this path, which will be used for GPL training.')
     parser.add_argument('--output_dir', required=True, help='Output path for the GPL model.')
     parser.add_argument('--do_evaluation', action='store_true', default=False, help='Wether to do the evaluation (after training)')
-    parser.add_argument('--evaluation_output', required=True, help='Path for the evaluation output.')
+    parser.add_argument('--evaluation_output', default='output', help='Path for the evaluation output.')
     parser.add_argument('--qgen_prefix', default='qgen', help='This prefix will appear as part of the (folder/file) names for query-generation results: For example, we will have "gen-qrels/" and "gen-queries.jsonl" by default.')
     parser.add_argument('--base_ckpt', default='distilbert-base-uncased', help='Initialization checkpoint in HF or SBERT format. Meaning-pooling will be used.')
     parser.add_argument('--generator', default='BeIR/query-gen-msmarco-t5-base-v1')
