@@ -43,7 +43,7 @@ def train(
         try:
             GenericDataLoader(evaluation_data)
         except Exception as e:
-            logging.error('Cannot load evaluation data for evaluation usage.')
+            logger.error('Cannot load evaluation data for evaluation usage.')
             raise e
 
     #### Make sure there is a `corpus.jsonl` file. It should be under either `path_to_generated_data` or `evaluation_data`` ####

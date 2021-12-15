@@ -41,6 +41,7 @@ python -m gpl.train \
     # --use_amp   # Use this for efficient training if the machine supports AMP
 
 # One can run `python -m gpl.train --help` for the information of all the arguments
+# To reproduce the experiments in the paper, set `base_ckpt` to "GPL/msmarco-distilbert-margin-mse" (https://huggingface.co/GPL/msmarco-distilbert-margin-mse)
 ```
 or import GPL's trainining method in a python script:
 ```python
@@ -49,7 +50,8 @@ import gpl
 dataset = 'fiqa'
 gpl.train(
     path_to_generated_data=f"generated/{dataset}",
-    base_ckpt='distilbert-base-uncased',
+    base_ckpt='distilbert-base-uncased',  
+    # base_ckpt='GPL/msmarco-distilbert-margin-mse',  # The starting checkpoint of the experiments in the paper
     batch_size_gpl=32,
     gpl_steps=140000,
     output_dir=f"output/{dataset}",
@@ -71,7 +73,7 @@ The workflow of GPL is shown as follows:
 2. Then, it runs negative mining with the generated queries as input on the target corpus. The mined passages will be viewed as **negative examples** for training. One can specify any dense retrievers ([SBERT](https://github.com/UKPLab/sentence-transformers) or [Huggingface/transformers](https://github.com/huggingface/transformers) checkpoints, we use [msmarco-distilbert-base-v3](sentence-transformers/msmarco-distilbert-base-v3) + [msmarco-MiniLM-L-6-v3](https://huggingface.co/sentence-transformers/msmarco-MiniLM-L-6-v3) by default) or BM25 to the argument `retrievers` as the negative miner.
     > Result file (under path `$path_to_generated_data`): hard-negatives.jsonl;
 3. Finally, it does pseudo labeling with the powerful cross-encoders (we use [cross-encoder/ms-marco-MiniLM-L-6-v2](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L-6-v2) by default.) on the query-passage pairs that we have so far (for both positive and negative examples).
-    > Result file (under path `$path_to_generated_data`): gpl-training-data.tsv. It contains (`gpl_steps` * `batch_size_gpl`) tuples in total.
+    > Result file (under path `$path_to_generated_data`): `gpl-training-data.tsv`. It contains (`gpl_steps` * `batch_size_gpl`) tuples in total.
 
 Up to now, we have the actual training data ready. The very last step is to apply the [MarginMSE loss](gpl/toolkit/loss.py) to teach the student retriever to mimic the margin scores, CE(query, positive) - CE(query, negative) labeled by the teacher model (Cross-Encoder, CE).
 

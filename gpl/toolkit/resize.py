@@ -13,6 +13,8 @@ logging.basicConfig(
 
 def resize(data_path, output_path, new_size):
     corpus = GenericDataLoader(data_path).load_corpus()
+    assert new_size < len(corpus), '`new_size` should be smaller than the corpus size'
+
     corpus_new = random.sample(list(corpus.items()), k=new_size)
     os.makedirs(output_path, exist_ok=True)
     with open(os.path.join(output_path, 'corpus.jsonl'), 'w') as f:
