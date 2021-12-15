@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+sample-data/fiqa
+sample-data/fiqa.zip
+sample-data/output
