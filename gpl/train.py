@@ -18,9 +18,9 @@ logging.basicConfig(
 
 def train(
     path_to_generated_data: str,
-    evaluation_data: str,
     output_dir: str,
     do_evaluation: str = False,
+    evaluation_data: str = None,
     evaluation_output: str = 'output',
     qgen_prefix: str = 'qgen',
     base_ckpt: str = 'distilbert-base-uncased',
@@ -50,6 +50,7 @@ def train(
     if new_size is not None:
         assert new_size * queries_per_passage >= batch_size_gpl
 
+
     #### Make sure there is a `corpus.jsonl` file. It should be under either `path_to_generated_data` or `evaluation_data`` ####
     #### Also resize the corpus for efficient training if required  ####
     os.makedirs(path_to_generated_data, exist_ok=True)
@@ -62,6 +63,7 @@ def train(
             corpus_path = os.path.join(evaluation_data, 'corpus.jsonl')
             os.system(f'cp {corpus_path} {path_to_generated_data}')
     
+
     #### Synthetic query generation ####
     #### This will be skipped if there is an existing `gen-queries.jsonl`file under `path_to_generated_data` ####
     if f'{qgen_prefix}-qrels' in os.listdir(path_to_generated_data) and f'{qgen_prefix}-queries.jsonl' in os.listdir(path_to_generated_data):
@@ -73,6 +75,7 @@ def train(
         qgen(path_to_generated_data, path_to_generated_data, generator_name_or_path=generator, ques_per_passage=queries_per_passage, bsz=batch_size_generation, qgen_prefix=qgen_prefix)
         corpus, gen_queries, gen_qrels = GenericDataLoader(path_to_generated_data, prefix=qgen_prefix).load(split="train")
 
+
     #### Hard-negative mining ####
     #### This will be skipped if there is an existing `hard-negatives.jsonl` file under `path_to_generated_data` ####
     if 'hard-negatives.jsonl' in os.listdir(path_to_generated_data):
@@ -81,6 +84,7 @@ def train(
         logger.info('No hard-negative data found. Now mining it')
         miner = NegativeMiner(path_to_generated_data, qgen_prefix, retrievers=retrievers, nneg=negatives_per_query)
         miner.run()
+
 
     #### Pseudo labeling ####
     #### This will be skipped if there is an existing `gpl-training-data.tsv` file under `path_to_generated_data` ####
@@ -123,6 +127,7 @@ def train(
     else:
         logger.info('Trained GPL model found. Now skip training')
 
+
     ### Evaluate the model if required ###
     if do_evaluation:
         logger.info('Doing evaluation for GPL')
@@ -138,10 +143,10 @@ def train(
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--path_to_generated_data', required=True, help='Path for/to the generated data. If an empty folder is indicated, query generation and hard-negative mining will be run automatically (the `corpus.jsonl` file in `evaluation_data` will be used!!!); one can also use a BeIR-QGen format data folder to start and skip the query generation.')
-    parser.add_argument('--evaluation_data', required=True, help='Path to the BeIR-format dataset. Please make sure at least `corpus.jsonl` exists under this path, which will be used for GPL training.')
+    parser.add_argument('--path_to_generated_data', required=True, help='Path for/to the generated data. GPL will first check this path for a `corpus.jsonl` file for the (sole) data input of the whole pipeline. If an empty folder is indicated, query generation and hard-negative mining will be run automatically; one can also use a BeIR-QGen format data folder to start and skip the query generation.')
     parser.add_argument('--output_dir', required=True, help='Output path for the GPL model.')
     parser.add_argument('--do_evaluation', action='store_true', default=False, help='Wether to do the evaluation (after training)')
+    parser.add_argument('--evaluation_data', type=str, help='Path to the BeIR-format dataset. This is the next folder GPL goes to for the target corpus if there is no `corpus.jsonl` under `path_to_generated_data`')
     parser.add_argument('--evaluation_output', default='output', help='Path for the evaluation output.')
     parser.add_argument('--qgen_prefix', default='qgen', help='This prefix will appear as part of the (folder/file) names for query-generation results: For example, we will have "gen-qrels/" and "gen-queries.jsonl" by default.')
     parser.add_argument('--base_ckpt', default='distilbert-base-uncased', help='Initialization checkpoint in HF or SBERT format. Meaning-pooling will be used.')
