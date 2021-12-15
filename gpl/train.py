@@ -60,13 +60,13 @@ def train(
     
     #### Synthetic query generation ####
     #### This will be skipped if there is an existing `gen-queries.jsonl`file under `path_to_generated_data` ####
-    if 'gen-qrels' in os.listdir(path_to_generated_data) and 'gen-queries.jsonl' in os.listdir(path_to_generated_data):
+    if f'{qgen_prefix}-qrels' in os.listdir(path_to_generated_data) and f'{qgen_prefix}-queries.jsonl' in os.listdir(path_to_generated_data):
         logger.info('Loading from existing generated data')
         corpus, gen_queries, gen_qrels = GenericDataLoader(path_to_generated_data, prefix=qgen_prefix).load(split="train")
     else:
         logger.info('No generated data found. Now generating it')
         assert 'corpus.jsonl' in os.listdir(path_to_generated_data), 'At least corpus should exist!'
-        qgen(path_to_generated_data, path_to_generated_data, generator_name_or_path=generator, ques_per_passage=queries_per_passage, bsz=batch_size_generation)
+        qgen(path_to_generated_data, path_to_generated_data, generator_name_or_path=generator, ques_per_passage=queries_per_passage, bsz=batch_size_generation, qgen_prefix=qgen_prefix)
         corpus, gen_queries, gen_qrels = GenericDataLoader(path_to_generated_data, prefix=qgen_prefix).load(split="train")
 
     #### Hard-negative mining ####
@@ -104,7 +104,7 @@ def train(
         train_dataloader = DataLoader(train_dataset, shuffle=False, batch_size=batch_size_gpl, drop_last=True)  # Here shuffle=False, since (or assuming) we have done it in the pseudo labeling
         train_loss = MarginDistillationLoss(model=model)
 
-        assert gpl_steps > 1000
+        # assert gpl_steps > 1000
         model.fit(
             [(train_dataloader, train_loss),],
             epochs=1,
