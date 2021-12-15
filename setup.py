@@ -9,12 +9,12 @@ setup(
     version="0.0.1",
     author="Kexin Wang",
     author_email="kexin.wang.2049@gmail.com",
-    description="An easy-to-use Elasticsearch BM25 interface",
+    description="GPL is an unsupervised domain adaptation method for training dense retrievers. It is based on query generation and pseudo labeling with powerful cross-encoders. To train a domain-adapted model, it needs only the unlabeled target corpus and can achieve significant improvement over zero-shot models.",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/kwang2049/easy-elasticsearch",
+    url="https://github.com/UKPLab/gpl",
     project_urls={
-        "Bug Tracker": "https://github.com/kwang2049/easy-elasticsearch/issues",
+        "Bug Tracker": "https://github.com/UKPLab/gpl/issues",
     },
     packages=find_packages(),
     classifiers=[
