@@ -76,7 +76,7 @@ The workflow of GPL is shown as follows:
 Up to now, we have the actual training data ready. The very last step is to apply the [MarginMSE loss](gpl/toolkit/loss.py) to teach the student retriever to mimic the margin scores, CE(query, positive) - CE(query, negative) labeled by the teacher model (Cross-Encoder, CE).
 
 ## Customized data
-One can also replace/put the customized data for any intermediate step under the path $path_to_generated_data with the same name fashion. GPL will skip the intermediate steps by using these provided data.
+One can also replace/put the customized data for any intermediate step under the path `$path_to_generated_data` with the same name fashion. GPL will skip the intermediate steps by using these provided data.
 
 ## Citation
 If you use the code for evaluation, feel free to cite our publication [GPL: Generative Pseudo Labeling for Unsupervised Domain Adaptation of Dense Retrieval](https://arxiv.org/abs/2112.07577):
