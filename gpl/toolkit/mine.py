@@ -28,15 +28,22 @@ logging.basicConfig(
 
 class NegativeMiner(object):
 
-    def __init__(self, generated_path, prefix, retrievers=['bm25', 'msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3']):
+    def __init__(self, generated_path, prefix, retrievers=['bm25', 'msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'], nneg=50):
         self.corpus, self.gen_queries, self.gen_qrels = GenericDataLoader(generated_path, prefix=prefix).load(split="train")
         self.output_path = os.path.join(generated_path, 'hard-negatives.jsonl')
         self.retrievers = retrievers
+        if 'bm25' in retrievers:
+            assert nneg <= 10000, "Only `negatives_per_query` <= 10000 is acceptable by Elasticsearch-BM25"
+        
+        self.nneg = nneg
+        if nneg > len(self.corpus):
+            logger.warning("`negatives_per_query` > corpus size. Please use a smaller `negatives_per_query`")
+            self.nneg = len(self.corpus)
 
     def _get_doc(self, did):
         return ' '.join([self.corpus[did]['title'], self.corpus[did]['text']])
     
-    def _mine_sbert(self, model_name, nneg=50):
+    def _mine_sbert(self, model_name):
         logger.info(f'Mining with {model_name}')
         result = {}
         sbert = SentenceTransformer(model_name)
@@ -62,7 +69,7 @@ class NegativeMiner(object):
                 normalize_embeddings=True
             )
             score_mtrx = torch.matmul(qemb_batch, doc_embs.t())  # (qsize, dsize)
-            _, indices_topk = score_mtrx.topk(k=nneg, dim=-1)
+            _, indices_topk = score_mtrx.topk(k=self.nneg, dim=-1)
             indices_topk = indices_topk.tolist()
             for qid, neg_dids in zip(qid_batch, indices_topk):
                 neg_dids = dids[neg_dids].tolist()
@@ -72,7 +79,7 @@ class NegativeMiner(object):
                 result[qid] = neg_dids
         return result
     
-    def _mine_bm25(self, nneg=50):
+    def _mine_bm25(self):
         logger.info(f'Mining with bm25')
         result = {}
         docs = list(map(self._get_doc, self.corpus.keys()))
@@ -81,7 +88,7 @@ class NegativeMiner(object):
         bm25 = ElasticSearchBM25(pool, port_http='9222', port_tcp='9333', service_type='executable', index_name=f'one_trial{int(time.time() * 1000000)}')
         for qid, pos_dids in tqdm.tqdm(self.gen_qrels.items()):
             query = self.gen_queries[qid]
-            rank = bm25.query(query, topk=nneg)  # topk should be <= 10000
+            rank = bm25.query(query, topk=self.nneg)  # topk should be <= 10000
             neg_dids = list(rank.keys())
             for pos_did in self.gen_qrels[qid]:
                 if pos_did in neg_dids:
@@ -121,5 +128,5 @@ if __name__ == '__main__':
     parser.add_argument('--generated_path')
     args = parser.parse_args()
 
-    miner = NegativeMiner(args.generated_path, 'gen')
+    miner = NegativeMiner(args.generated_path, 'qgen')
     miner.run()

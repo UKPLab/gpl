@@ -35,6 +35,7 @@ def train(
     gpl_steps: int = 140000,
     use_amp: bool = False,
     retrievers: List[str] = ['msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'],
+    negatives_per_query: int = 50
 ):     
     #### Assertions ####
     assert pooling in ['mean', 'cls', 'max']
@@ -46,6 +47,8 @@ def train(
         except Exception as e:
             logger.error('Cannot load evaluation data for evaluation usage.')
             raise e
+    if new_size is not None:
+        assert new_size * queries_per_passage >= batch_size_gpl
 
     #### Make sure there is a `corpus.jsonl` file. It should be under either `path_to_generated_data` or `evaluation_data`` ####
     #### Also resize the corpus for efficient training if required  ####
@@ -65,7 +68,7 @@ def train(
         logger.info('Loading from existing generated data')
         corpus, gen_queries, gen_qrels = GenericDataLoader(path_to_generated_data, prefix=qgen_prefix).load(split="train")
     else:
-        logger.info('No generated data found. Now generating it')
+        logger.info('No generated queries found. Now generating it')
         assert 'corpus.jsonl' in os.listdir(path_to_generated_data), 'At least corpus should exist!'
         qgen(path_to_generated_data, path_to_generated_data, generator_name_or_path=generator, ques_per_passage=queries_per_passage, bsz=batch_size_generation, qgen_prefix=qgen_prefix)
         corpus, gen_queries, gen_qrels = GenericDataLoader(path_to_generated_data, prefix=qgen_prefix).load(split="train")
@@ -76,15 +79,15 @@ def train(
         logger.info('Using exisiting hard-negative data')
     else: 
         logger.info('No hard-negative data found. Now mining it')
-        miner = NegativeMiner(path_to_generated_data, qgen_prefix, retrievers=retrievers)
+        miner = NegativeMiner(path_to_generated_data, qgen_prefix, retrievers=retrievers, nneg=negatives_per_query)
         miner.run()
 
     #### Pseudo labeling ####
     #### This will be skipped if there is an existing `gpl-training-data.tsv` file under `path_to_generated_data` ####
     if 'gpl-training-data.tsv' in os.listdir(path_to_generated_data):
-        logger.info('Using existing GPL training data')
+        logger.info('Using existing GPL-training data')
     else:
-        logger.info('No GPL training data found. Now generating it via pseudo labeling')
+        logger.info('No GPL-training data found. Now generating it via pseudo labeling')
         pseudo_labeler = PseudoLabeler(path_to_generated_data, gen_queries, corpus, gpl_steps, batch_size_gpl, cross_encoder)
         pseudo_labeler.run()
     
@@ -153,5 +156,6 @@ if __name__ == '__main__':
     parser.add_argument('--gpl_steps', type=int, default=140000, help='Training steps for GPL.')
     parser.add_argument('--use_amp', action='store_true', default=False, help='Whether to use half precision')
     parser.add_argument('--retrievers', nargs='+', default=['msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'], help='Indicate retriever names. They could be one or many BM25 ("bm25") or dense retrievers (in SBERT format).')
+    parser.add_argument('--negatives_per_query', type=int, default=50, help="Mine how many negatives per query per retriever")
     args = parser.parse_args()
     train(**vars(args))
