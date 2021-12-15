@@ -85,9 +85,6 @@ class HardNegativeDataset(Dataset):
             neg_pid = random.choice(list(neg_pids))
             neg_text = concat_title_and_body(neg_pid, self.corpus, self.sep)
 
-            # pos_score = scores[pos_pid]
-            # neg_score = scores[neg_pid]
-            # return (query_text, pos_text, neg_text, pos_score, neg_score)
             return (query_dict['qid'], pos_pid, neg_pid), (query_text, pos_text, neg_text)
         else:
             return None
