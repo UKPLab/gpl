@@ -16,3 +16,9 @@ python -m gpl.toolkit.reformat \
     --output_path "dpr-SBERT-format"
 ```
 And then use the reformatted checkpoint saved in the `--output_path`.
+
+What this [`gpl.toolkit.reformat.dpr_lik`](https://github.com/UKPLab/gpl/blob/7272222f290dbdc5e4a7f32be070496f05ffaad8/gpl/toolkit/reformat.py#L30) does is:
+1. Load the checkpoint using Huggingface's `AutoModel` into `word_embedding_model`;
+2. Then within the `word_embedding_model`, it traces along the path `DPRQuestionEncoder` -> `DPREncoder` -> `BertModel` -> `BertPooler` to get the `BertModel` and the `BertPooler` (the final linear layer of DPR models);
+3. Compose everything (including the `BertModel`, a CLS pooling layer, the `BertPooler`) together again into a SBERT-format checkpoint.
+4. Save the reformatted checkpoint into the `--output_path`.
