@@ -3,7 +3,7 @@
 In some cases, a checkpoint cannot be directly loadable (via `--base_ckpt`) by SBERT (or in a correct way), e.g. "facebook/dpr-question_encoder-single-nq-base" and "princeton-nlp/sup-simcse-bert-base-uncased". 
 
 This is because:
-1. they are **not in SBERT-format** but in Hugginface-format;
+1. They are **not in SBERT-format** but in Hugginface-format;
 2. And for Huggingface-format, SBERT can only work with the checkpoint with **a Transformer layer as the last layer**, i.e. the outputs are hidden states with shape `(batch_size, sequence_length, hidden_dimenstion)`.
 
 However, the last layer of "facebook/dpr-question_encoder-single-nq-base" is actually a dense linear (with an activation function).
