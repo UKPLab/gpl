@@ -8,13 +8,8 @@ import logging
 import numpy as np 
 import json
 import argparse
-
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format='%(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.INFO
-)
+
 
 def evaluate(data_path, output_dir, model_name_or_path, max_seq_length, score_function, pooling):
     data_paths = []

@@ -1,20 +1,17 @@
 from beir.datasets.data_loader import GenericDataLoader
-from sentence_transformers import SentenceTransformer, losses, models
-from .toolkit import qgen, NegativeMiner, MarginDistillationLoss, GenerativePseudoLabelingDataset, PseudoLabeler, evaluate, resize, mnrl
+from .toolkit import qgen, NegativeMiner, MarginDistillationLoss, GenerativePseudoLabelingDataset, PseudoLabeler, evaluate, resize, load_sbert, set_logger_format
+from sentence_transformers import SentenceTransformer
 from torch.utils.data import DataLoader
-
 import os
 import logging
-
 import argparse
 from typing import List
+# import crash_ipdb
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format='%(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.INFO
-)
+
+set_logger_format()
+logger = logging.getLogger('gpl.train')  # Here we do not use __name__ to have unified logger name, no matter whether we are using `python -m` or `import gpl; gpl.train`
+
 
 def train(
     path_to_generated_data: str,
@@ -28,7 +25,7 @@ def train(
     cross_encoder: str = 'cross-encoder/ms-marco-MiniLM-L-6-v2',
     batch_size_gpl: int = 32,
     batch_size_generation: int = 32,
-    pooling: str = 'mean',
+    pooling: str = None,
     max_seq_length: int = 350,
     new_size: int = None,
     queries_per_passage: int = 3,
@@ -38,7 +35,7 @@ def train(
     negatives_per_query: int = 50
 ):     
     #### Assertions ####
-    assert pooling in ['mean', 'cls', 'max']
+    assert pooling in [None, 'mean', 'cls', 'max']
     if do_evaluation:
         assert evaluation_data is not None
         assert evaluation_output is not None
@@ -100,12 +97,9 @@ def train(
     #### This will be skipped if the checkpoint at the indicated training steps can be found ####
     ckpt_dir = os.path.join(output_dir, str(gpl_steps))
     if not os.path.exists(ckpt_dir) or (os.path.exists(ckpt_dir) and not os.listdir(ckpt_dir)):
-        logger.info('Now training GPL on generated data')
-        #### Provide any HuggingFace model and fine-tune from scratch
-        model_name = base_ckpt
-        word_embedding_model = models.Transformer(model_name, max_seq_length=max_seq_length)
-        pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(), pooling_mode=pooling)
-        model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
+        logger.info('Now doing training on the generated data with the MarginMSE loss')
+        #### It can load checkpoints in both SBERT-format (recommended) and Huggingface-format
+        model: SentenceTransformer = load_sbert(base_ckpt, pooling, max_seq_length)
 
         fpath_gpl_data = os.path.join(path_to_generated_data, 'gpl-training-data.tsv')
         train_dataset = GenerativePseudoLabelingDataset(fpath_gpl_data, gen_queries, corpus)
@@ -154,7 +148,7 @@ if __name__ == '__main__':
     parser.add_argument('--cross_encoder', default='cross-encoder/ms-marco-MiniLM-L-6-v2')
     parser.add_argument('--batch_size_gpl', type=int, default=32)
     parser.add_argument('--batch_size_generation', type=int, default=32)
-    parser.add_argument('--pooling', type=str, default='mean', choices=['cls', 'mean', 'max'])
+    parser.add_argument('--pooling', type=str, default=None, choices=['cls', 'mean', 'max'], help="Specifying pooling method for dense retriever if in Huggingface-format. By default (None), it uses mean pooling. If in SBERT-format, there would be the indicated pooling method in its configure file and thus this argument will be ignored. ")
     parser.add_argument('--max_seq_length', type=int, default=350)
     parser.add_argument('--new_size', type=int, default=None, help='Resize the corpus to `new_size` if needed.')
     parser.add_argument('--queries_per_passage', type=int, default=3)

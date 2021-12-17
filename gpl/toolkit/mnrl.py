@@ -1,11 +1,8 @@
-from ast import parse
-from beir import util, LoggingHandler
 from beir.datasets.data_loader import GenericDataLoader
-from beir.generation import QueryGenerator as QGen
-from beir.generation.models import QGenModel
 from beir.retrieval.train import TrainRetriever
 from sentence_transformers import SentenceTransformer, losses, models
 import os
+
 
 def mnrl(data_path, base_ckpt, output_dir, max_seq_length=350, use_amp=True):
     prefix = "gen"

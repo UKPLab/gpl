@@ -1,15 +1,11 @@
+from math import log
 from beir.datasets.data_loader import GenericDataLoader
 import random
 import os
 import json
 import logging
-
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format='%(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.INFO
-)
+
 
 def resize(data_path, output_path, new_size):
     corpus = GenericDataLoader(data_path).load_corpus()

@@ -1,18 +1,11 @@
-import json
 from sentence_transformers import CrossEncoder
 from .dataset import HardNegativeDataset
 from torch.utils.data import DataLoader
 import tqdm
 import os
 import logging
-
-
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format='%(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.INFO
-)
+
 
 def hard_negative_collate_fn(batch):
     query_id, pos_id, neg_id = zip(*[example.guid for example in batch])
@@ -59,5 +52,4 @@ class PseudoLabeler(object):
         with open(self.output_path, 'w') as f:
             f.writelines(data)
         
-        logger.info(f'Saved GPL training data to {self.output_path}')
-    
+        logger.info(f'Saved GPL-training data to {self.output_path}')

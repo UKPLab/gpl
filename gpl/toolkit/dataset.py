@@ -4,13 +4,8 @@ from sentence_transformers.readers.InputExample import InputExample
 import random
 import linecache
 import logging
-
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format='%(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.INFO
-)
+
 
 def concat_title_and_body(did, corpus, sep):
     document = []

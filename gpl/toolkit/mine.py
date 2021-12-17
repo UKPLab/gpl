@@ -1,14 +1,7 @@
-from ast import parse
 import json
-from beir import util, LoggingHandler
 from beir.datasets.data_loader import GenericDataLoader
-from beir.generation import QueryGenerator as QGen
-from beir.generation.models import QGenModel
-from beir.retrieval.train import TrainRetriever
-from sentence_transformers import SentenceTransformer, losses, models, util
+from sentence_transformers import SentenceTransformer
 import torch
-from sentence_transformers import CrossEncoder
-from torch.nn import functional as F
 from easy_elasticsearch import ElasticSearchBM25
 import tqdm
 import numpy as np
@@ -16,14 +9,7 @@ import os
 import logging
 import argparse
 import time
-
-
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format='%(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
-    level=logging.INFO
-)
 
 
 class NegativeMiner(object):

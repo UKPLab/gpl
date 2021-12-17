@@ -6,3 +6,5 @@ from .pl import PseudoLabeler
 from .evaluation import evaluate
 from .mnrl import mnrl
 from .resize import resize
+from .sbert import load_sbert, directly_loadable_by_sbert
+from .log import set_logger_format
