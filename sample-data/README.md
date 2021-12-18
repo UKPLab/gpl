@@ -17,7 +17,7 @@ And this will generated the data into [./generated/fiqa](./generated/fiqa):
 
 The prefix "qgen-" is actually specified by the argument `--qgen_prefix`.
 
-Let us now have a detailed look at format:
+Let us now have a detailed look at the formats:
 
 1. corpus.json
     ```bash
