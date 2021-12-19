@@ -7,11 +7,22 @@ import os
 import logging
 import numpy as np 
 import json
+from typing import List
 import argparse
+from .sbert import load_sbert
 logger = logging.getLogger(__name__)
 
 
-def evaluate(data_path, output_dir, model_name_or_path, max_seq_length, score_function, pooling):
+def evaluate(
+    data_path: str, 
+    output_dir: str, 
+    model_name_or_path: str, 
+    max_seq_length: int = 350, 
+    score_function: str = 'dot', 
+    pooling: str = None, 
+    sep: str = ' ', 
+    k_values: List[int] = [10,]
+):
     data_paths = []
     if 'cqadupstack' in data_path:
         data_paths = [os.path.join(data_path, sub_dataset) for sub_dataset in \
@@ -27,15 +38,8 @@ def evaluate(data_path, output_dir, model_name_or_path, max_seq_length, score_fu
     for data_path in data_paths:
         corpus, queries, qrels = GenericDataLoader(data_path).load(split="test")
 
-        if '0_Transformer' in os.listdir(model_name_or_path):
-            model_name_or_path = os.path.join(model_name_or_path, '0_Transformer')
-        word_embedding_model = sentence_transformers.models.Transformer(model_name_or_path, max_seq_length=max_seq_length)
-        pooling_model = sentence_transformers.models.Pooling(
-            word_embedding_model.get_word_embedding_dimension(), 
-            pooling
-        )
-        model = sentence_transformers.SentenceTransformer(modules=[word_embedding_model, pooling_model])
-        sbert = models.SentenceBERT(sep=' ')
+        model = load_sbert(model_name_or_path, pooling, max_seq_length)
+        sbert = models.SentenceBERT(sep=sep)
         sbert.q_model = model
         sbert.doc_model = model
         
@@ -45,7 +49,7 @@ def evaluate(data_path, output_dir, model_name_or_path, max_seq_length, score_fu
         results = retriever.retrieve(corpus, queries)
 
         #### Evaluate your retrieval using NDCG@k, MAP@K ...
-        ndcg, _map, recall, precision = EvaluateRetrieval.evaluate(qrels, results, [10,])
+        ndcg, _map, recall, precision = EvaluateRetrieval.evaluate(qrels, results, k_values)
         mrr = EvaluateRetrieval.evaluate_custom(qrels, results, [10,], metric='mrr')
         ndcgs.append(ndcg)
         _maps.append(_map)
@@ -71,13 +75,15 @@ def evaluate(data_path, output_dir, model_name_or_path, max_seq_length, score_fu
         }, f, indent=4)
     logger.info(f'Saved evaluation results to {result_path}')
 
-if __name__ == '__name__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path')
     parser.add_argument('--output_dir')
     parser.add_argument('--model_name_or_path')
     parser.add_argument('--max_seq_length', type=int)
     parser.add_argument('--score_function', choices=['dot', 'cos_sim'])
+    parser.add_argument('--pooling', choices=['dot', 'cos_sim'])
+    parser.add_argument('--sep', type=str, default=' ', help="Separation token between title and body text for each passage. The concatenation way is `sep.join([title, body])`")
+    parser.add_argument('--k_values', nargs='+', type=int, default=[10,], help="The K values in the evaluation. This will compute nDCG@K, recall@K, precision@K and MAP@K")    
     args = parser.parse_args()
-
-    evaluate(args.data_path, args.output_dir, args.model_name_or_path, args.max_seq_length, args.score_function)
+    evaluate(**vars(args))

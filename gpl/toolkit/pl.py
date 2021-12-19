@@ -15,11 +15,11 @@ def hard_negative_collate_fn(batch):
 
 class PseudoLabeler(object):
 
-    def __init__(self, generated_path, gen_queries, corpus, total_steps, batch_size, cross_encoder):
+    def __init__(self, generated_path, gen_queries, corpus, total_steps, batch_size, cross_encoder, sep=' '):
         assert 'hard-negatives.jsonl' in os.listdir(generated_path)
         fpath_hard_negatives = os.path.join(generated_path, 'hard-negatives.jsonl')
         self.cross_encoder = CrossEncoder(cross_encoder)
-        hard_negative_dataset = HardNegativeDataset(fpath_hard_negatives, gen_queries, corpus)    
+        hard_negative_dataset = HardNegativeDataset(fpath_hard_negatives, gen_queries, corpus, sep)    
         self.hard_negative_dataloader = DataLoader(hard_negative_dataset, shuffle=True, batch_size=batch_size, drop_last=True)
         self.hard_negative_dataloader.collate_fn = hard_negative_collate_fn
         self.output_path = os.path.join(generated_path, 'gpl-training-data.tsv')

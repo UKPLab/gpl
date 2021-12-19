@@ -14,9 +14,10 @@ logger = logging.getLogger(__name__)
 
 class NegativeMiner(object):
 
-    def __init__(self, generated_path, prefix, retrievers=['bm25', 'msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'], nneg=50):
+    def __init__(self, generated_path, prefix, retrievers=['bm25', 'msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'], nneg=50, sep=' '):
         self.corpus, self.gen_queries, self.gen_qrels = GenericDataLoader(generated_path, prefix=prefix).load(split="train")
         self.output_path = os.path.join(generated_path, 'hard-negatives.jsonl')
+        self.sep = sep
         self.retrievers = retrievers
         if 'bm25' in retrievers:
             assert nneg <= 10000, "Only `negatives_per_query` <= 10000 is acceptable by Elasticsearch-BM25"
@@ -27,7 +28,7 @@ class NegativeMiner(object):
             self.nneg = len(self.corpus)
 
     def _get_doc(self, did):
-        return ' '.join([self.corpus[did]['title'], self.corpus[did]['text']])
+        return self.sep.join([self.corpus[did]['title'], self.corpus[did]['text']])
     
     def _mine_sbert(self, model_name):
         logger.info(f'Mining with {model_name}')

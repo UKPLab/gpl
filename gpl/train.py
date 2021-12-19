@@ -32,7 +32,9 @@ def train(
     gpl_steps: int = 140000,
     use_amp: bool = False,
     retrievers: List[str] = ['msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'],
-    negatives_per_query: int = 50
+    negatives_per_query: int = 50,
+    sep:str = ' ',
+    k_values: List[int] = [10,]
 ):     
     #### Assertions ####
     assert pooling in [None, 'mean', 'cls', 'max']
@@ -79,7 +81,7 @@ def train(
         logger.info('Using exisiting hard-negative data')
     else: 
         logger.info('No hard-negative data found. Now mining it')
-        miner = NegativeMiner(path_to_generated_data, qgen_prefix, retrievers=retrievers, nneg=negatives_per_query)
+        miner = NegativeMiner(path_to_generated_data, qgen_prefix, retrievers=retrievers, nneg=negatives_per_query, sep=sep)
         miner.run()
 
 
@@ -89,7 +91,7 @@ def train(
         logger.info('Using existing GPL-training data')
     else:
         logger.info('No GPL-training data found. Now generating it via pseudo labeling')
-        pseudo_labeler = PseudoLabeler(path_to_generated_data, gen_queries, corpus, gpl_steps, batch_size_gpl, cross_encoder)
+        pseudo_labeler = PseudoLabeler(path_to_generated_data, gen_queries, corpus, gpl_steps, batch_size_gpl, cross_encoder, sep)
         pseudo_labeler.run()
     
 
@@ -102,7 +104,7 @@ def train(
         model: SentenceTransformer = load_sbert(base_ckpt, pooling, max_seq_length)
 
         fpath_gpl_data = os.path.join(path_to_generated_data, 'gpl-training-data.tsv')
-        train_dataset = GenerativePseudoLabelingDataset(fpath_gpl_data, gen_queries, corpus)
+        train_dataset = GenerativePseudoLabelingDataset(fpath_gpl_data, gen_queries, corpus, sep)
         train_dataloader = DataLoader(train_dataset, shuffle=False, batch_size=batch_size_gpl, drop_last=True)  # Here shuffle=False, since (or assuming) we have done it in the pseudo labeling
         train_loss = MarginDistillationLoss(model=model)
 
@@ -131,7 +133,9 @@ def train(
             ckpt_dir, 
             max_seq_length,
             score_function='dot',  # Since for now MarginMSE only works with dot-product
-            pooling=pooling
+            pooling=pooling,
+            sep=sep,
+            k_values=k_values
         )
 
 
@@ -156,5 +160,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_amp', action='store_true', default=False, help='Whether to use half precision')
     parser.add_argument('--retrievers', nargs='+', default=['msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'], help='Indicate retriever names. They could be one or many BM25 ("bm25") or dense retrievers (in SBERT format).')
     parser.add_argument('--negatives_per_query', type=int, default=50, help="Mine how many negatives per query per retriever")
+    parser.add_argument('--sep', type=str, default=' ', help="Separation token between title and body text for each passage. The concatenation way is `sep.join([title, body])`")
+    parser.add_argument('--k_values', nargs='+', type=int, default=[10,], help="The K values in the evaluation. This will compute nDCG@K, recall@K, precision@K and MAP@K")
     args = parser.parse_args()
     train(**vars(args))
