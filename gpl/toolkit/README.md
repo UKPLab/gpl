@@ -1,4 +1,6 @@
 # GPL Toolkit
+The GPL toolkit contains source files that can both be imported as a module to serve the main entry method `gpl.train` or be runable itself as an independent util.
+
 ## reformat
 In some cases, a checkpoint cannot be directly loadable (via `--base_ckpt`) by SBERT (or in a correct way), e.g. "facebook/dpr-question_encoder-single-nq-base" and "princeton-nlp/sup-simcse-bert-base-uncased". 
 
@@ -24,7 +26,12 @@ What this [`gpl.toolkit.reformat.dpr_lik`](https://github.com/UKPLab/gpl/blob/72
 4. Save the reformatted checkpoint into the `--output_path`.
 
 ## evaluation
-We can both evaluate a checkpoint (1) within the `gpl.train` workflow or (2) in an independent routine. For the case (2), we can simply run this, with the example of SciFact (of course, writing a new Python script with `from gpl.toolkit import evaluate; evaluate(...)` is also supported):
+We can both evaluate a checkpoint 
+
+1. within the `gpl.train` workflow or 
+2. in an independent routine. 
+    
+For the case (2), we can simply run this below, with the example of SciFact (of course, writing a new Python script with `from gpl.toolkit import evaluate; evaluate(...)` is also supported):
 ```bash
 export dataset="scifact"
 if [ ! -d "$dataset" ]; then
