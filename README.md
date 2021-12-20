@@ -80,7 +80,7 @@ Up to now, we have the actual training data ready. One can look at [sample-data/
 PS: The `--retrievers` are for negative mining. They can be any dense retrievers trained on the general domain (e.g. MS MARCO) and do **not need to be strong for the target task/domain**. Please refer to the [paper](https://arxiv.org/abs/2112.07577) for more details (cf. Table 5).
 
 ## Customized data
-One can also replace/put the customized data for any intermediate step under the path `$path_to_generated_data` with the same name fashion. GPL will skip the intermediate steps by using these provided data.
+One can also replace/put the customized data for any intermediate step under the path `$path_to_generated_data` with the same name fashion (please refer to the example of data format here: [sample-data/generated/fiqa](sample-data/generated/fiqa)). GPL will skip the intermediate steps by using these provided data.
 
 ## Citation
 If you use the code for evaluation, feel free to cite our publication [GPL: Generative Pseudo Labeling for Unsupervised Domain Adaptation of Dense Retrieval](https://arxiv.org/abs/2112.07577):
