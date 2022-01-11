@@ -91,7 +91,7 @@ def train(
         logger.info('Using existing GPL-training data')
     else:
         logger.info('No GPL-training data found. Now generating it via pseudo labeling')
-        pseudo_labeler = PseudoLabeler(path_to_generated_data, gen_queries, corpus, gpl_steps, batch_size_gpl, cross_encoder, sep)
+        pseudo_labeler = PseudoLabeler(path_to_generated_data, gen_queries, corpus, gpl_steps, batch_size_gpl, cross_encoder, max_seq_length)
         pseudo_labeler.run()
     
 
