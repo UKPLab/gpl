@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="gpl",
-    version="0.0.8",
+    version="0.1.0",
     author="Kexin Wang",
     author_email="kexin.wang.2049@gmail.com",
     description="GPL is an unsupervised domain adaptation method for training dense retrievers. It is based on query generation and pseudo labeling with powerful cross-encoders. To train a domain-adapted model, it needs only the unlabeled target corpus and can achieve significant improvement over zero-shot models.",
