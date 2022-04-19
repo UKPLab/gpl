@@ -1,6 +1,8 @@
 from torch import nn, Tensor
 from typing import Iterable, Dict
 from torch.nn import functional as F
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MarginDistillationLoss(nn.Module):
@@ -15,7 +17,9 @@ class MarginDistillationLoss(nn.Module):
         super(MarginDistillationLoss, self).__init__()
         self.model = model
         self.scale = scale
+        assert similarity_fct in ['dot', 'cos_sim']
         self.similarity_fct = similarity_fct
+        logger.info(f'Set GPL score function to {similarity_fct}')
         self.loss_fct = nn.MSELoss()
 
     def forward(self, sentence_features: Iterable[Dict[str, Tensor]], labels: Tensor):

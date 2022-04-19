@@ -14,24 +14,44 @@ logger = logging.getLogger(__name__)
 
 class NegativeMiner(object):
 
-    def __init__(self, generated_path, prefix, retrievers=['bm25', 'msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'], nneg=50, sep=' '):
-        self.corpus, self.gen_queries, self.gen_qrels = GenericDataLoader(generated_path, prefix=prefix).load(split="train")
+    def __init__(
+        self, 
+        generated_path, 
+        prefix, 
+        retrievers=['bm25', 'msmarco-distilbert-base-v3', 'msmarco-MiniLM-L-6-v3'], 
+        retriever_score_functions=['none', 'cos_sim', 'cos_sim'],
+        nneg=50,
+        use_train_qrels: bool = False
+    ):
+        if use_train_qrels:
+            logger.info('Using labeled qrels to construct the hard-negative data')
+            self.corpus, self.gen_queries, self.gen_qrels = GenericDataLoader(generated_path).load(split="train")
+        else:
+            self.corpus, self.gen_queries, self.gen_qrels = GenericDataLoader(generated_path, prefix=prefix).load(split="train")
         self.output_path = os.path.join(generated_path, 'hard-negatives.jsonl')
-        self.sep = sep
         self.retrievers = retrievers
+        self.retriever_score_functions = retriever_score_functions
         if 'bm25' in retrievers:
             assert nneg <= 10000, "Only `negatives_per_query` <= 10000 is acceptable by Elasticsearch-BM25"
+            assert retriever_score_functions[retrievers.index('bm25')] == 'none'
         
+        assert set(retriever_score_functions).issubset({'none', 'dot', 'cos_sim'})
+
         self.nneg = nneg
         if nneg > len(self.corpus):
             logger.warning("`negatives_per_query` > corpus size. Please use a smaller `negatives_per_query`")
             self.nneg = len(self.corpus)
 
     def _get_doc(self, did):
-        return self.sep.join([self.corpus[did]['title'], self.corpus[did]['text']])
+        return ' '.join([self.corpus[did]['title'], self.corpus[did]['text']])
     
-    def _mine_sbert(self, model_name):
+    def _mine_sbert(self, model_name, score_function):
         logger.info(f'Mining with {model_name}')
+        assert score_function in ['dot', 'cos_sim']
+        normalize_embeddings = False
+        if score_function == 'cos_sim':
+            normalize_embeddings = True
+
         result = {}
         sbert = SentenceTransformer(model_name)
         docs = list(map(self._get_doc, self.corpus.keys()))
@@ -42,7 +62,7 @@ class NegativeMiner(object):
             show_progress_bar=True, 
             convert_to_numpy=False, 
             convert_to_tensor=True,
-            normalize_embeddings=True
+            normalize_embeddings=normalize_embeddings
         )
         qids = list(self.gen_qrels.keys())
         queries = list(map(lambda qid: self.gen_queries[qid], qids))
@@ -53,7 +73,7 @@ class NegativeMiner(object):
                 show_progress_bar=False, 
                 convert_to_numpy=False, 
                 convert_to_tensor=True,
-                normalize_embeddings=True
+                normalize_embeddings=normalize_embeddings
             )
             score_mtrx = torch.matmul(qemb_batch, doc_embs.t())  # (qsize, dsize)
             _, indices_topk = score_mtrx.topk(k=self.nneg, dim=-1)
@@ -85,11 +105,11 @@ class NegativeMiner(object):
 
     def run(self):
         hard_negatives = {}
-        for retriever in self.retrievers:
+        for retriever, score_function in zip(self.retrievers, self.retriever_score_functions):
             if retriever == 'bm25':
                 hard_negatives[retriever] = self._mine_bm25()
             else:
-                hard_negatives[retriever] = self._mine_sbert(retriever)
+                hard_negatives[retriever] = self._mine_sbert(retriever, score_function)
         
         logger.info('Combining all the data')
         result_jsonl = []

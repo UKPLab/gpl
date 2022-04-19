@@ -3,6 +3,8 @@ from beir.retrieval.evaluation import EvaluateRetrieval
 import sentence_transformers
 from beir.retrieval import models
 from beir.retrieval.search.dense import DenseRetrievalExactSearch as DRES
+from sentence_transformers import SentenceTransformer
+import sentence_transformers
 import os
 import logging
 import numpy as np 
@@ -21,8 +23,16 @@ def evaluate(
     score_function: str = 'dot', 
     pooling: str = None, 
     sep: str = ' ', 
-    k_values: List[int] = [10,]
+    k_values: List[int] = [1, 3, 5, 10, 20, 100],
+    split: str = 'test'
 ):
+    model: SentenceTransformer = load_sbert(model_name_or_path, pooling, max_seq_length)
+    
+    pooling_module: sentence_transformers.models.Pooling = model._last_module()
+    assert type(pooling_module) == sentence_transformers.models.Pooling
+    pooling_mode = pooling_module.get_pooling_mode_str()
+    logger.info(f'Running evaluation with setting: max_seq_length = {max_seq_length}, score_function = {score_function}, split = {split} and pooling: {pooling_mode}')
+
     data_paths = []
     if 'cqadupstack' in data_path:
         data_paths = [os.path.join(data_path, sub_dataset) for sub_dataset in \
@@ -36,21 +46,20 @@ def evaluate(
     precisions = []
     mrrs = []
     for data_path in data_paths:
-        corpus, queries, qrels = GenericDataLoader(data_path).load(split="test")
+        corpus, queries, qrels = GenericDataLoader(data_path).load(split=split)
 
-        model = load_sbert(model_name_or_path, pooling, max_seq_length)
         sbert = models.SentenceBERT(sep=sep)
         sbert.q_model = model
         sbert.doc_model = model
         
-        model = DRES(sbert, batch_size=16)
+        model_dres = DRES(sbert, batch_size=16)
         assert score_function in ['dot', 'cos_sim']
-        retriever = EvaluateRetrieval(model, score_function=score_function) # or "dot" for dot-product
+        retriever = EvaluateRetrieval(model_dres, score_function=score_function, k_values=k_values) # or "dot" for dot-product
         results = retriever.retrieve(corpus, queries)
 
         #### Evaluate your retrieval using NDCG@k, MAP@K ...
         ndcg, _map, recall, precision = EvaluateRetrieval.evaluate(qrels, results, k_values)
-        mrr = EvaluateRetrieval.evaluate_custom(qrels, results, [10,], metric='mrr')
+        mrr = EvaluateRetrieval.evaluate_custom(qrels, results, k_values, metric='mrr')
         ndcgs.append(ndcg)
         _maps.append(_map)
         recalls.append(recall)
@@ -80,10 +89,11 @@ if __name__ == '__main__':
     parser.add_argument('--data_path')
     parser.add_argument('--output_dir')
     parser.add_argument('--model_name_or_path')
-    parser.add_argument('--max_seq_length', type=int)
-    parser.add_argument('--score_function', choices=['dot', 'cos_sim'])
-    parser.add_argument('--pooling', choices=['dot', 'cos_sim'])
+    parser.add_argument('--max_seq_length', type=int, default=350)
+    parser.add_argument('--score_function', choices=['dot', 'cos_sim'], default='dot')
+    parser.add_argument('--pooling', choices=['mean', 'cls', 'max'], default=None)
     parser.add_argument('--sep', type=str, default=' ', help="Separation token between title and body text for each passage. The concatenation way is `sep.join([title, body])`")
-    parser.add_argument('--k_values', nargs='+', type=int, default=[10,], help="The K values in the evaluation. This will compute nDCG@K, recall@K, precision@K and MAP@K")    
+    parser.add_argument('--k_values', nargs='+', type=int, default=[1, 3, 5, 10, 20, 100], help="The K values in the evaluation. This will compute nDCG@K, recall@K, precision@K and MAP@K")    
+    parser.add_argument('--split', type=str, default='test', choices=['train', 'test', 'dev'], help='Which split to evaluate on')    
     args = parser.parse_args()
     evaluate(**vars(args))
