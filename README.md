@@ -108,7 +108,8 @@ python -m gpl.train \
     --queries_per_passage -1
 ```
 
-## Pre-trained checkpoints
+## Pre-trained checkpoints and generated data
+### Pre-trained checkpoints
 We now release the pre-trained GPL models via the https://huggingface.co/GPL. There are currently five types of models:
 
 1. `GPL/${dataset}-msmarco-distilbert-gpl`: Model with training order of (1) MarginMSE on MSMARCO -> (2) GPL on `${dataset}`;
@@ -123,6 +124,14 @@ Among these models, `GPL/${dataset}-distilbert-tas-b-gpl-self_miner` ones works 
 ![](imgs/beir.jpg)
 
 For reproducing the results with the same package versions used in the experiments, please refer to the conda environment file, [environment.yml](environment.yml).
+
+### Generated data
+We now release the generated data used in the experiments of the [GPL paper](https://arxiv.org/abs/2112.07577): 
+
+1. The generated data for the main experiments on the 6 BeIR datasets: https://public.ukp.informatik.tu-darmstadt.de/kwang/gpl/generated-data/main/;
+2. The generated data for the experiments on the full 18 BeIR datasets: https://public.ukp.informatik.tu-darmstadt.de/kwang/gpl/generated-data/beir.
+
+Please note that the 4 datasets of `bioasq`, `robust04`, `trec-news` and `signal1m` are only available after registration with the original official authorities. We only release the document IDs for these corpora with the file name `corpus.doc_ids.txt`. For more details, please refer to the [BeIR](https://github.com/UKPLab/beir) repository.
 
 ## Citation
 If you use the code for evaluation, feel free to cite our publication [GPL: Generative Pseudo Labeling for Unsupervised Domain Adaptation of Dense Retrieval](https://arxiv.org/abs/2112.07577):
