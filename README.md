@@ -4,6 +4,8 @@ GPL is an unsupervised domain adaptation method for training dense retrievers. I
 For more information, checkout our publication:
 - [GPL: Generative Pseudo Labeling for Unsupervised Domain Adaptation of Dense Retrieval](https://arxiv.org/abs/2112.07577) (NAACL 2022)
 
+For reproduction, please refer to this [snapshot branch](https://github.com/UKPLab/gpl/tree/reproduction-snapshot).
+
 ## Installation
 One can either install GPL via `pip`
 ```bash
