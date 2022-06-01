@@ -28,7 +28,7 @@ export dataset="fiqa"
 python -m gpl.train \
     --path_to_generated_data "generated/$dataset" \
     --base_ckpt "distilbert-base-uncased" \
-    --gpl_score_function "dot"
+    --gpl_score_function "dot" \
     --batch_size_gpl 32 \
     --gpl_steps 140000 \
     --new_size -1 \
