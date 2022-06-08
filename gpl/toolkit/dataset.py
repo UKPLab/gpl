@@ -1,4 +1,5 @@
 import json
+from typing import Dict
 from torch.utils.data import Dataset
 from sentence_transformers.readers.InputExample import InputExample
 import random
@@ -7,7 +8,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def concat_title_and_body(did, corpus, sep):
+def concat_title_and_body(did: str, corpus: Dict[str, Dict[str, str]], sep: str):
+    assert type(did) == str
     document = []
     title = corpus[did]['title'].strip()
     body = corpus[did]['text'].strip()

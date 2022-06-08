@@ -33,8 +33,8 @@ logger = logging.getLogger('gpl.train')  # Here we do not use __name__ to have u
 def train(
     path_to_generated_data: str,
     output_dir: str,
-    mnrl_output_dir: str,
-    mnrl_evaluation_output: str,
+    mnrl_output_dir: str = None,
+    mnrl_evaluation_output: str = None,
     do_evaluation: str = False,
     evaluation_data: str = None,
     evaluation_output: str = 'output',
