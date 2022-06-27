@@ -81,6 +81,8 @@ gpl.train(
     # --use_amp   # One can use this flag for enabling the efficient float16 precision
 )
 ```
+One can also refer to [this toy example](https://colab.research.google.com/drive/1Wis4WugIvpnSAc7F7HGBkB38lGvNHTtX?usp=sharing) on Google Colab for better understanding how the code works.
+
 ## How does GPL work?
 The workflow of GPL is shown as follows:
 ![](imgs/GPL.png)
