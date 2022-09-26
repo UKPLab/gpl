@@ -5,18 +5,19 @@ import random
 import os
 import json
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-def resize(data_path, output_path, new_size, use_train_qrels:bool = False):
+def resize(data_path, output_path, new_size, use_train_qrels: bool = False):
     train_qrels = None
     if use_train_qrels:
-        corpus, _, train_qrels = GenericDataLoader(data_path).load(split='train')
+        corpus, _, train_qrels = GenericDataLoader(data_path).load(split="train")
     else:
         corpus = GenericDataLoader(data_path).load_corpus()
-    
+
     if len(corpus) <= new_size:
-        logger.warning('`new_size` should be smaller than the corpus size')
+        logger.warning("`new_size` should be smaller than the corpus size")
         corpus_new = list(corpus.items())
     else:
         corpus_new = random.sample(list(corpus.items()), k=new_size)
@@ -32,12 +33,16 @@ def resize(data_path, output_path, new_size, use_train_qrels:bool = False):
                     nadded += 1
 
     os.makedirs(output_path, exist_ok=True)
-    with open(os.path.join(output_path, 'corpus.jsonl'), 'w') as f:
+    with open(os.path.join(output_path, "corpus.jsonl"), "w") as f:
         for doc_id, doc in corpus_new.items():
-            doc['_id'] = doc_id
-            f.write(json.dumps(doc) + '\n') 
-    
+            doc["_id"] = doc_id
+            f.write(json.dumps(doc) + "\n")
+
     if not nadded:
-        logger.info(f'Resized the corpus in {data_path} to {output_path} with new size {new_size}')
+        logger.info(
+            f"Resized the corpus in {data_path} to {output_path} with new size {new_size}"
+        )
     else:
-        logger.info(f'Resized the corpus in {data_path} to {output_path} with new size {new_size} + {nadded} (including the documents mentioned in the train qrels)')
+        logger.info(
+            f"Resized the corpus in {data_path} to {output_path} with new size {new_size} + {nadded} (including the documents mentioned in the train qrels)"
+        )
