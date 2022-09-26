@@ -16,6 +16,7 @@ or via `git clone`
 git clone https://github.com/UKPLab/gpl.git && cd gpl
 pip install -e .
 ```
+> Meanwhile, please make sure the [correct version of PyTorch](https://pytorch.org/get-started/locally/) has been installed according to your CUDA version.
 
 ## Usage
 GPL accepts data in the [BeIR](https://github.com/UKPLab/beir)-format. For example, we can download the [FiQA](https://sites.google.com/view/fiqa/) dataset hosted by BeIR:

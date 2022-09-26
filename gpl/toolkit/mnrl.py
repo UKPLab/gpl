@@ -4,10 +4,19 @@ from sentence_transformers import SentenceTransformer, losses, models
 import os
 
 
-def mnrl(data_path, base_ckpt, output_dir, max_seq_length=350, use_amp=True, qgen_prefix='qgen'):
+def mnrl(
+    data_path,
+    base_ckpt,
+    output_dir,
+    max_seq_length=350,
+    use_amp=True,
+    qgen_prefix="qgen",
+):
     prefix = qgen_prefix
     #### Training on Generated Queries ####
-    corpus, gen_queries, gen_qrels = GenericDataLoader(data_path, prefix=prefix).load(split="train")
+    corpus, gen_queries, gen_qrels = GenericDataLoader(data_path, prefix=prefix).load(
+        split="train"
+    )
 
     #### Provide any HuggingFace model and fine-tune from scratch
     model_name = base_ckpt
@@ -32,9 +41,9 @@ def mnrl(data_path, base_ckpt, output_dir, max_seq_length=350, use_amp=True, qge
     warmup_steps = int(len(train_samples) * num_epochs / retriever.batch_size * 0.1)
 
     retriever.fit(
-        train_objectives=[(train_dataloader, train_loss)], 
+        train_objectives=[(train_dataloader, train_loss)],
         epochs=num_epochs,
         output_path=model_save_path,
         warmup_steps=warmup_steps,
-        use_amp=use_amp
+        use_amp=use_amp,
     )
