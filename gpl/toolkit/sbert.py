@@ -11,8 +11,11 @@ def directly_loadable_by_sbert(model: SentenceTransformer):
             "This is an input text",
         ]
         model.encode(texts)
-    except RuntimeError:
-        loadable_by_sbert = False
+    except RuntimeError as e:
+        if "CUDA out of memory" in str(e):
+            raise e
+        else:
+            loadable_by_sbert = False
     return loadable_by_sbert
 
 

@@ -23,5 +23,5 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
-    install_requires=["beir", "easy-elasticsearch>=0.0.9", "protobuf"],
+    install_requires=["beir", "easy-elasticsearch>=0.0.9", "protobuf", "pytest"],
 )
