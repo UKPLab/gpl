@@ -9,9 +9,9 @@ def test_too_large_batch_size():
     mock_pl = mock.patch.object(PseudoLabeler, "__init__", return_value=None)
     hard_negative_dataloader = DataLoader(["data"], batch_size=2)
     hints = [
-        "Batch size larger than number of data points",
+        "Batch size larger than number of data points / generated queries ",
         "batch size:",
-        "number of data points:",
+        "number of data points / generated queries:",
     ]
 
     # When and then:

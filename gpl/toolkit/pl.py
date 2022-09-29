@@ -71,8 +71,9 @@ class PseudoLabeler(object):
 
         if number_of_data_points < batch_size:
             raise ValueError(
-                "Batch size larger than number of data points "
-                f"(batch size: {batch_size}, number of data points: {number_of_data_points})"
+                "Batch size larger than number of data points / generated queries "
+                f"(batch size: {batch_size}, "
+                f"number of data points / generated queries: {number_of_data_points})"
             )
 
         # header: 'query_id', 'positive_id', 'negative_id', 'pseudo_label_margin'
