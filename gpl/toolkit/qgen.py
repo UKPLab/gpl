@@ -27,13 +27,22 @@ def qgen(
     #### Generating 3 questions per passage.
     #### Reminder the higher value might produce lots of duplicates
     #### Generate queries per passage from docs in corpus and save them in data_path
-    generator.generate(
-        corpus,
-        output_dir=output_dir,
-        ques_per_passage=ques_per_passage,
-        prefix=prefix,
-        batch_size=bsz,
-    )
+    try:
+        generator.generate(
+            corpus,
+            output_dir=output_dir,
+            ques_per_passage=ques_per_passage,
+            prefix=prefix,
+            batch_size=bsz,
+        )
+    except RuntimeError as e:
+        if "CUDA out of memory" in str(e):
+            raise RuntimeError(
+                f"CUDA out of memory during query generation "
+                f"(queries_per_passage: {ques_per_passage}, batch_size_generation: {bsz}). "
+                f"Please try smaller `queries_per_passage` and/or `batch_size_generation`."
+            )
+
     if not os.path.exists(os.path.join(output_dir, "corpus.jsonl")):
         os.system(f"cp {data_path}/corpus.jsonl {output_dir}")
 
