@@ -8,8 +8,8 @@ from sentence_transformers import SentenceTransformer
 import shutil
 
 
-@pytest.fixture(name="sbert", scope="session")
-def sbert_fixture() -> SentenceTransformer:
+@pytest.fixture(name="sbert_path", scope="session")
+def sbert_path_fixture() -> str:
     try:
         local_dir = tempfile.mkdtemp()
 
@@ -29,7 +29,7 @@ def sbert_fixture() -> SentenceTransformer:
         ]
         vocab_file = os.path.join(local_dir, "vocab.txt")
         with open(vocab_file, "w") as f:
-            f.writelines(vocab)
+            f.write("\n".join(vocab))
 
         config = BertConfig(
             vocab_size=len(vocab),
@@ -46,7 +46,12 @@ def sbert_fixture() -> SentenceTransformer:
         bert.save_pretrained(local_dir)
         tokenizer.save_pretrained(local_dir)
 
-        yield SentenceTransformer(local_dir)
+        yield local_dir
     finally:
         shutil.rmtree(local_dir)
         print("Cleared temporary SBERT/BERT model")
+
+
+@pytest.fixture(name="sbert", scope="session")
+def sbert_fixture(sbert_path: str) -> SentenceTransformer:
+    yield SentenceTransformer(sbert_path)
