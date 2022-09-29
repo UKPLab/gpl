@@ -79,7 +79,7 @@ gpl.train(
     qgen_prefix="qgen",
     # This prefix will appear as part of the (folder/file) names for query-generation results: For example, we will have "qgen-qrels/" and "qgen-queries.jsonl" by default.
     do_evaluation=True,
-    # --use_amp   # One can use this flag for enabling the efficient float16 precision
+    # use_amp=True   # One can use this flag for enabling the efficient float16 precision
 )
 ```
 One can also refer to [this toy example](https://colab.research.google.com/drive/1Wis4WugIvpnSAc7F7HGBkB38lGvNHTtX?usp=sharing) on Google Colab for better understanding how the code works.
