@@ -66,6 +66,16 @@ class PseudoLabeler(object):
         return decoded
 
     def run(self):
+        number_of_data_points = len(self.hard_negative_dataloader.dataset)
+        batch_size = self.hard_negative_dataloader.batch_size
+
+        if number_of_data_points < batch_size:
+            raise ValueError(
+                "Batch size larger than number of data points / generated queries "
+                f"(batch size: {batch_size}, "
+                f"number of data points / generated queries: {number_of_data_points})"
+            )
+
         # header: 'query_id', 'positive_id', 'negative_id', 'pseudo_label_margin'
         data = []
 
