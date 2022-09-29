@@ -10,6 +10,7 @@ import logging
 import numpy as np
 import json
 from typing import List
+import re
 import argparse
 from .sbert import load_sbert
 
@@ -27,6 +28,7 @@ def evaluate(
     k_values: List[int] = [1, 3, 5, 10, 20, 100],
     split: str = "test",
 ):
+
     model: SentenceTransformer = load_sbert(model_name_or_path, pooling, max_seq_length)
 
     pooling_module: sentence_transformers.models.Pooling = model._last_module()
@@ -64,7 +66,19 @@ def evaluate(
     precisions = []
     mrrs = []
     for data_path in data_paths:
-        corpus, queries, qrels = GenericDataLoader(data_path).load(split=split)
+        try:
+            corpus, queries, qrels = GenericDataLoader(data_path).load(split=split)
+        except ValueError as e:
+            missing_files = re.search(
+                r"File (.*) not present! Please provide accurate file.", str(e)
+            )
+            if missing_files:
+                raise ValueError(
+                    f"Missing evaluation data files ({missing_files.groups()}). "
+                    f"Please put them under {data_path} or set `do_evaluation`=False."
+                )
+            else:
+                raise e
 
         sbert = models.SentenceBERT(sep=sep)
         sbert.q_model = model
