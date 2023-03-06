@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 import os
 import logging
 import argparse
-from typing import List, Union
+from typing import List, Optional
 import math
 
 # import crash_ipdb
@@ -36,10 +36,10 @@ logger = logging.getLogger(
 def train(
     path_to_generated_data: str,
     output_dir: str,
-    mnrl_output_dir: str = None,
-    mnrl_evaluation_output: str = None,
-    do_evaluation: str = False,
-    evaluation_data: str = None,
+    mnrl_output_dir: Optional[str] = None,
+    mnrl_evaluation_output: Optional[str] = None,
+    do_evaluation: bool = False,
+    evaluation_data: Optional[str] = None,
     evaluation_output: str = "output",
     qgen_prefix: str = "qgen",
     base_ckpt: str = "distilbert-base-uncased",
@@ -47,9 +47,9 @@ def train(
     cross_encoder: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
     batch_size_gpl: int = 32,
     batch_size_generation: int = 32,
-    pooling: str = None,
+    pooling: Optional[str] = None,
     max_seq_length: int = 350,
-    new_size: int = None,
+    new_size: Optional[int] = None,
     queries_per_passage: int = 3,
     gpl_steps: int = 140000,
     use_amp: bool = False,
@@ -59,7 +59,8 @@ def train(
     eval_split: str = "test",
     use_train_qrels: bool = False,
     gpl_score_function: str = "dot",
-    rescale_range: List[float] = None,
+    rescale_range: Optional[List[float]] = None,
+    device: str = 'cuda',
 ):
     #### Assertions ####
     assert pooling in [None, "mean", "cls", "max"]
@@ -167,6 +168,7 @@ def train(
             ques_per_passage=queries_per_passage,
             bsz=batch_size_generation,
             qgen_prefix=qgen_prefix,
+            device=device,
         )
         corpus, gen_queries, gen_qrels = GenericDataLoader(
             path_to_generated_data, prefix=qgen_prefix
@@ -185,6 +187,7 @@ def train(
             retriever_score_functions=retriever_score_functions,
             nneg=negatives_per_query,
             use_train_qrels=use_train_qrels,
+            device=device,
         )
         miner.run()
 
@@ -203,6 +206,7 @@ def train(
             batch_size_gpl,
             cross_encoder,
             max_seq_length,
+            device=device,
         )
         pseudo_labeler.run()
     # Do rescaling if needed:
@@ -233,7 +237,7 @@ def train(
     ):
         logger.info("Now doing training on the generated data with the MarginMSE loss")
         #### It can load checkpoints in both SBERT-format (recommended) and Huggingface-format
-        model: SentenceTransformer = load_sbert(base_ckpt, pooling, max_seq_length)
+        model: SentenceTransformer = load_sbert(base_ckpt, pooling, max_seq_length, device=device)
 
         fpath_gpl_data = os.path.join(path_to_generated_data, gpl_training_data_fname)
         logger.info(f"Load GPL training data from {fpath_gpl_data}")
@@ -423,5 +427,7 @@ if __name__ == "__main__":
         help="Which split to evaluate on",
     )
     parser.add_argument("--use_train_qrels", action="store_true", default=False)
+    parser.add_argument("--device", type=str, default="cuda",
+                        help="Device on which training runs. For example `cuda:0` or `cuda` or `cpu`.")
     args = parser.parse_args()
     train(**vars(args))

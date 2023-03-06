@@ -44,6 +44,7 @@ python -m gpl.train \
     --retriever_score_functions "cos_sim" "cos_sim" \
     --cross_encoder "cross-encoder/ms-marco-MiniLM-L-6-v2" \
     --qgen_prefix "qgen" \
+    --device "cuda:0" \
     --do_evaluation \
     # --use_amp   # Use this for efficient training if the machine supports AMP
 
