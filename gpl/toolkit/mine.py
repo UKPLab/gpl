@@ -9,6 +9,7 @@ import os
 import logging
 import argparse
 import time
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class NegativeMiner(object):
         retriever_score_functions=["none", "cos_sim", "cos_sim"],
         nneg=50,
         use_train_qrels: bool = False,
+        device: Optional[str] = None,
     ):
         if use_train_qrels:
             logger.info("Using labeled qrels to construct the hard-negative data")
@@ -49,6 +51,7 @@ class NegativeMiner(object):
                 "`negatives_per_query` > corpus size. Please use a smaller `negatives_per_query`"
             )
             self.nneg = len(self.corpus)
+        self.device = device
 
     def _get_doc(self, did):
         return " ".join([self.corpus[did]["title"], self.corpus[did]["text"]])
@@ -61,7 +64,7 @@ class NegativeMiner(object):
             normalize_embeddings = True
 
         result = {}
-        sbert = SentenceTransformer(model_name)
+        sbert = SentenceTransformer(model_name, device=self.device)
         docs = list(map(self._get_doc, self.corpus.keys()))
         dids = np.array(list(self.corpus.keys()))
         doc_embs = sbert.encode(
@@ -147,7 +150,8 @@ class NegativeMiner(object):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--generated_path")
+    parser.add_argument('--device', type=str, default=None)
     args = parser.parse_args()
 
-    miner = NegativeMiner(args.generated_path, "qgen")
+    miner = NegativeMiner(args.generated_path, "qgen", device=args.device)
     miner.run()

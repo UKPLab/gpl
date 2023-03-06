@@ -1,5 +1,6 @@
 from sentence_transformers import SentenceTransformer, models
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +20,8 @@ def directly_loadable_by_sbert(model: SentenceTransformer):
     return loadable_by_sbert
 
 
-def load_sbert(model_name_or_path, pooling=None, max_seq_length=None):
-    model = SentenceTransformer(model_name_or_path)
+def load_sbert(model_name_or_path, pooling=None, max_seq_length=None, device: Optional[str] = None):
+    model = SentenceTransformer(model_name_or_path, device=device)
 
     ## Check whether SBERT can load the checkpoint and use it
     loadable_by_sbert = directly_loadable_by_sbert(model)
@@ -45,7 +46,7 @@ def load_sbert(model_name_or_path, pooling=None, max_seq_length=None):
                 word_embedding_model.get_word_embedding_dimension(),
                 pooling_mode=pooling,
             )
-            model = SentenceTransformer(modules=[word_embedding_model, pooling_model])
+            model = SentenceTransformer(modules=[word_embedding_model, pooling_model], device=device)
     else:
         ## Not directly loadable by SBERT
         ## Mainly one case: The last layer is a linear layer (e.g. "facebook/dpr-question_encoder-single-nq-base")

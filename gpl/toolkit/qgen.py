@@ -3,6 +3,7 @@ from beir.generation import QueryGenerator as QGen
 from beir.generation.models import QGenModel
 import os
 import argparse
+from typing import Optional
 
 
 def qgen(
@@ -12,12 +13,13 @@ def qgen(
     ques_per_passage=3,
     bsz=32,
     qgen_prefix="qgen",
+    device: Optional[str] = None,
 ):
     #### Provide the data_path where nfcorpus has been downloaded and unzipped
     corpus = GenericDataLoader(data_path).load_corpus()
 
     #### question-generation model loading
-    generator = QGen(model=QGenModel(generator_name_or_path))
+    generator = QGen(model=QGenModel(generator_name_or_path, device=device))
 
     #### Query-Generation using Nucleus Sampling (top_k=25, top_p=0.95) ####
     #### https://huggingface.co/blog/how-to-generate
@@ -51,5 +53,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_path", required=True)
     parser.add_argument("--output_dir", required=True)
+    parser.add_argument('--device', type=str, required=False, default=None)
     args = parser.parse_args()
-    qgen(args.data_path, args.output_dir)
+    qgen(args.data_path, args.output_dir, device=args.device)
